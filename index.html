@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SevaNagar Health Monitoring Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-heartbeat me-2"></i>
+                SevaNagar Health Monitor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#outbreaks">Outbreaks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#hospitals">Hospitals</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#vaccination">Vaccination</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#wardCases">Ward Cases</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#citizen">Citizen Portal</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <div class="container-fluid mt-4">
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="dashboard-section">
+            <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line me-2"></i>Quick Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalCases">0</div>
+                            <div class="stat-label">Active Cases</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="hospitalBeds">0</div>
+                            <div class="stat-label">Available Beds</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="vaccinationRate">0%</div>
+                            <div class="stat-label">Vaccination Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="outbreakAlerts">0</div>
+                            <div class="stat-label">Active Alerts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert Panel -->
+                <div class="card mt-3">
+                    <div class="card-header bg-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Recent Alerts</h6>
+                    </div>
+                    <div class="card-body" id="alertPanel">
+                        <div class="alert alert-info">
+                            <small>System monitoring active</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <!-- Disease Outbreak Heatmap -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-map-marked-alt me-2"></i>Disease Outbreak Heatmap</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="heatmap" style="height: 400px;"></div>
+                    </div>
+                </div>
+
+                <!-- Hospital Resources -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-hospital me-2"></i>Hospital Resources</h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Hospital Bed Information -->
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Bed Availability</h6>
+                                    <div id="hospitalBedInfo">
+                                        <!-- Hospital bed data will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Medicine Stock Information -->
+                                <div class="mb-3">
+                                    <h6 class="text-success">Medicine Stock</h6>
+                                    <div id="medicineStockInfo">
+                                        <!-- Medicine stock data will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Hospital Chart -->
+                                <div id="hospitalChart" style="height: 200px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6><i class="fas fa-syringe me-2"></i>Vaccination Coverage</h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Vaccination Coverage Details -->
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Coverage by Ward</h6>
+                                    <div id="vaccinationCoverageInfo">
+                                        <!-- Vaccination coverage data will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Vaccination Chart -->
+                                <div id="vaccinationChart" style="height: 200px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time Data Table -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-table me-2"></i>Real-time Case Data</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Ward</th>
+                                        <th>Disease</th>
+                                        <th>New Cases</th>
+                                        <th>Total Cases</th>
+                                        <th>Status</th>
+                                        <th>Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="caseDataTable">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Outbreaks Section -->
+        <div id="outbreaks" class="dashboard-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-virus me-2"></i>Disease Outbreak Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div id="outbreakHeatmap" style="height: 400px;"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Outbreak Statistics</h6>
+                                    <div class="outbreak-stats">
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="totalOutbreaks">0</div>
+                                            <div class="stat-label">Active Outbreaks</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="criticalWards">0</div>
+                                            <div class="stat-label">Critical Wards</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="trendingDiseases">0</div>
+                                            <div class="stat-label">Trending Diseases</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6>Cases by Ward</h6>
+                                    <div id="outbreakTrendChart" style="height: 300px;"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Disease Distribution</h6>
+                                    <div id="diseaseDistributionChart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hospitals Section -->
+        <div id="hospitals" class="dashboard-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-hospital me-2"></i>Hospital Resource Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Resource Overview</h6>
+                                    <div id="hospitalResourceChart" style="height: 300px;"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Medicine Stock</h6>
+                                    <div id="medicineChart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h6>Hospital Status</h6>
+                                    <div id="hospitalList">
+                                        <!-- Hospital data will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vaccination Section -->
+        <div id="vaccination" class="dashboard-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-syringe me-2"></i>Vaccination Coverage Tracking</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Coverage by Ward</h6>
+                                    <div id="vaccinationCoverageChart" style="height: 300px;"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Overall Progress</h6>
+                                    <div id="vaccinationProgressChart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <h6>Coverage Summary</h6>
+                                    <div class="coverage-stats">
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="avgCoverage">0%</div>
+                                            <div class="stat-label">Average Coverage</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="targetWards">0</div>
+                                            <div class="stat-label">Target Wards</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-value" id="completedWards">0</div>
+                                            <div class="stat-label">Completed Wards</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <h6>Ward Details</h6>
+                                    <div id="vaccinationList">
+                                        <!-- Vaccination data will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ward Case Management Section -->
+        <div id="wardCases" class="dashboard-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-map-marked-alt me-2"></i>Ward Case Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Ward Statistics -->
+                            <div class="row mb-4">
+                                <div class="col-md-2">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="totalWardCases">0</div>
+                                        <div class="stat-label">Total Active</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="newWardCases">0</div>
+                                        <div class="stat-label">New Cases</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="recoveredWardCases">0</div>
+                                        <div class="stat-label">Recovered</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="deathsWardCases">0</div>
+                                        <div class="stat-label">Deaths</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="criticalWardCount">0</div>
+                                        <div class="stat-label">Critical Wards</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Charts -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6>Cases by Ward</h6>
+                                    <div id="wardCaseChart" style="height: 300px;"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Disease Breakdown</h6>
+                                    <div id="diseaseBreakdownChart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Ward Case Table -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6>Ward Case Details</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Ward</th>
+                                                    <th>Name</th>
+                                                    <th>Active Cases</th>
+                                                    <th>New Cases</th>
+                                                    <th>Recovered</th>
+                                                    <th>Deaths</th>
+                                                    <th>Risk Level</th>
+                                                    <th>Last Update</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="wardCaseTable">
+                                                <!-- Data will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Citizen Portal Section -->
+        <div id="citizen" class="dashboard-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-users me-2"></i>Citizen Health Portal</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Health Statistics -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6>Current Health Status</h6>
+                                    <div id="citizenHealthStats">
+                                        <!-- Stats will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6>Health Alerts</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="openCitizenAlert()">
+                                            <i class="fas fa-plus"></i> Report Issue
+                                        </button>
+                                    </div>
+                                    <div id="citizenAlertsSection">
+                                        <!-- Alerts will be populated here -->
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6>Prevention Tips</h6>
+                                        <button class="btn btn-sm btn-outline-info" onclick="openHealthQuery()">
+                                            <i class="fas fa-question"></i> Ask Question
+                                        </button>
+                                    </div>
+                                    <div id="preventionTipsSection">
+                                        <!-- Tips will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Upload Modal -->
+    <div class="modal fade" id="dataUploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Case Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dataUploadForm">
+                        <div class="mb-3">
+                            <label class="form-label">Ward</label>
+                            <select class="form-select" id="wardSelect" required>
+                                <option value="">Select Ward</option>
+                                <option value="Ward-1">Ward 1</option>
+                                <option value="Ward-2">Ward 2</option>
+                                <option value="Ward-3">Ward 3</option>
+                                <option value="Ward-4">Ward 4</option>
+                                <option value="Ward-5">Ward 5</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Disease Type</label>
+                            <select class="form-select" id="diseaseSelect" required>
+                                <option value="">Select Disease</option>
+                                <option value="Dengue">Dengue</option>
+                                <option value="Flu">Flu</option>
+                                <option value="COVID-19">COVID-19</option>
+                                <option value="Malaria">Malaria</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Cases Today</label>
+                            <input type="number" class="form-control" id="newCases" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Total Active Cases</label>
+                            <input type="number" class="form-control" id="totalActiveCases" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadData()">Upload Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hospital Update Modal -->
+    <div class="modal fade" id="hospitalUpdateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Hospital Resources</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="hospitalUpdateForm">
+                        <input type="hidden" id="hospitalUpdateId" name="hospitalId">
+                        <div class="mb-3">
+                            <label class="form-label">Hospital</label>
+                            <div id="hospitalUpdateName" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ward</label>
+                            <div id="hospitalUpdateWard" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Occupied Beds</label>
+                            <input type="number" class="form-control" id="hospitalUpdateOccupiedBeds" name="occupiedBeds" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Occupied ICU Beds</label>
+                            <input type="number" class="form-control" id="hospitalUpdateOccupiedIcu" name="occupiedIcu" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Available Ventilators</label>
+                            <input type="number" class="form-control" id="hospitalUpdateAvailableVentilators" name="availableVentilators" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="hospitalUpdateForm" class="btn btn-primary">Update Resources</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vaccination Update Modal -->
+    <div class="modal fade" id="vaccinationUpdateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Vaccination Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vaccinationUpdateForm">
+                        <input type="hidden" id="vaccinationUpdateWard" name="ward">
+                        <div class="mb-3">
+                            <label class="form-label">Ward</label>
+                            <div id="vaccinationUpdateName" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Total Population</label>
+                            <div id="vaccinationUpdatePopulation" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Currently Vaccinated</label>
+                            <input type="number" class="form-control" id="vaccinationUpdateVaccinated" name="vaccinated" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Vaccinations Today</label>
+                            <input type="number" class="form-control" id="vaccinationUpdateNew" name="newVaccinations" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Current Rate</label>
+                            <div id="vaccinationUpdateRate" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remaining Target</label>
+                            <div id="vaccinationUpdateRemaining" class="form-control-plaintext"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="vaccinationUpdateForm" class="btn btn-primary">Update Vaccination</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Citizen Alert Modal -->
+    <div class="modal fade" id="citizenAlertModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Report Health Issue</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="citizenAlertForm">
+                        <div class="mb-3">
+                            <label class="form-label">Alert Type</label>
+                            <select class="form-select" name="alertType" required>
+                                <option value="">Select Type</option>
+                                <option value="warning">Health Warning</option>
+                                <option value="info">General Information</option>
+                                <option value="success">Positive Update</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" name="alertTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" name="alertMessage" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ward</label>
+                            <select class="form-select" name="alertWard" required>
+                                <option value="">Select Ward</option>
+                                <option value="Ward-1">Ward 1</option>
+                                <option value="Ward-2">Ward 2</option>
+                                <option value="Ward-3">Ward 3</option>
+                                <option value="Ward-4">Ward 4</option>
+                                <option value="Ward-5">Ward 5</option>
+                                <option value="All Wards">All Wards</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="citizenAlertForm" class="btn btn-primary">Submit Alert</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ward Case Update Modal -->
+    <div class="modal fade" id="wardCaseUpdateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Ward Case Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="wardCaseUpdateForm">
+                        <input type="hidden" id="wardCaseUpdateWard" name="ward">
+                        <div class="mb-3">
+                            <label class="form-label">Ward</label>
+                            <div id="wardCaseUpdateName" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Disease</label>
+                            <select class="form-select" id="wardCaseUpdateDisease" name="disease" required>
+                                <option value="">Select Disease</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Active Cases</label>
+                                    <input type="number" class="form-control" name="active" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">New Cases Today</label>
+                                    <input type="number" class="form-control" name="newCases" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Recovered</label>
+                                    <input type="number" class="form-control" name="recovered" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Deaths</label>
+                                    <input type="number" class="form-control" name="deaths" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="wardCaseUpdateForm" class="btn btn-primary">Update Cases</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Query Modal -->
+    <div class="modal fade" id="healthQueryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ask Health Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="healthQueryForm">
+                        <div class="mb-3">
+                            <label class="form-label">Your Question</label>
+                            <textarea class="form-control" name="healthQuery" rows="4" required placeholder="Ask any health-related question..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Information (Optional)</label>
+                            <input type="text" class="form-control" name="contactInfo" placeholder="Phone number or email for follow-up">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="healthQueryForm" class="btn btn-primary">Submit Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Citizen Portal Modal -->
+    <div class="modal fade" id="citizenPortalModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Citizen Health Portal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Health Alerts</h6>
+                            <div id="citizenAlerts">
+                                <!-- Alerts will be populated here -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Prevention Tips</h6>
+                            <div id="preventionTips">
+                                <!-- Tips will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-buttons">
+        <button class="btn btn-primary btn-floating" onclick="openDataUpload()" title="Upload Data">
+            <i class="fas fa-upload"></i>
+        </button>
+        <button class="btn btn-info btn-floating" onclick="openCitizenPortal()" title="Citizen Portal">
+            <i class="fas fa-users"></i>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="error-handler.js"></script>
+    <script src="heatmap-enhanced.js"></script>
+    <script src="hospital-management.js"></script>
+    <script src="vaccination-tracking.js"></script>
+    <script src="ward-case-management.js"></script>
+    <script src="citizen-portal.js"></script>
+    <script src="navigation.js"></script>
+    <script src="upload-simple.js"></script>
+    <script src="dashboard-fallback.js"></script>
+</body>
+</html>
